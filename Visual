@@ -1,0 +1,965 @@
+-- Loading Screen | TheCoding Script
+-- Modern Cyberpunk Style Loading Screen with Galaga Mini-Game
+
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+
+-- Remove old if exists
+pcall(function()
+    if game:GetService("CoreGui"):FindFirstChild("LoadingScreen") then
+        game:GetService("CoreGui"):FindFirstChild("LoadingScreen"):Destroy()
+    end
+end)
+if LocalPlayer.PlayerGui:FindFirstChild("LoadingScreen") then
+    LocalPlayer.PlayerGui:FindFirstChild("LoadingScreen"):Destroy()
+end
+
+-- ========== SCREENGUI ==========
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "LoadingScreen"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.IgnoreGuiInset = true
+ScreenGui.DisplayOrder = 999999
+
+if syn and syn.protect_gui then
+    syn.protect_gui(ScreenGui)
+    ScreenGui.Parent = game:GetService("CoreGui")
+elseif gethui then
+    ScreenGui.Parent = gethui()
+elseif get_hidden_gui then
+    ScreenGui.Parent = get_hidden_gui()
+else
+    ScreenGui.Parent = game:GetService("CoreGui")
+end
+
+-- ========== BACKGROUND (Dark Gradient with Glow) ==========
+local Background = Instance.new("Frame")
+Background.Size = UDim2.new(1, 0, 1, 0)
+Background.BackgroundColor3 = Color3.fromRGB(8, 8, 12)
+Background.BorderSizePixel = 0
+Background.ZIndex = 1
+Background.Parent = ScreenGui
+
+-- Gradient overlay
+local Gradient = Instance.new("Frame")
+Gradient.Size = UDim2.new(1, 0, 1, 0)
+Gradient.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
+Gradient.BackgroundTransparency = 0.7
+Gradient.BorderSizePixel = 0
+Gradient.ZIndex = 1
+Gradient.Parent = Background
+
+-- Animated grid lines
+local GridOverlay = Instance.new("Frame")
+GridOverlay.Size = UDim2.new(1, 0, 1, 0)
+GridOverlay.BackgroundTransparency = 1
+GridOverlay.ZIndex = 2
+GridOverlay.Parent = Background
+
+local function createGrid()
+    for i = 0, 20 do
+        local lineV = Instance.new("Frame")
+        lineV.Size = UDim2.new(0, 1, 1, 0)
+        lineV.Position = UDim2.new(0, i * 50, 0, 0)
+        lineV.BackgroundColor3 = Color3.fromRGB(100, 50, 255)
+        lineV.BackgroundTransparency = 0.85
+        lineV.BorderSizePixel = 0
+        lineV.ZIndex = 2
+        lineV.Parent = GridOverlay
+        
+        local lineH = Instance.new("Frame")
+        lineH.Size = UDim2.new(1, 0, 0, 1)
+        lineH.Position = UDim2.new(0, 0, 0, i * 50)
+        lineH.BackgroundColor3 = Color3.fromRGB(100, 50, 255)
+        lineH.BackgroundTransparency = 0.85
+        lineH.BorderSizePixel = 0
+        lineH.ZIndex = 2
+        lineH.Parent = GridOverlay
+    end
+end
+
+task.spawn(createGrid)
+
+-- Floating particles
+local Particles = Instance.new("Frame")
+Particles.Size = UDim2.new(1, 0, 1, 0)
+Particles.BackgroundTransparency = 1
+Particles.ZIndex = 2
+Particles.Parent = Background
+
+local particles = {}
+for i = 1, 50 do
+    local particle = Instance.new("Frame")
+    particle.Size = UDim2.new(0, math.random(2, 4), 0, math.random(2, 4))
+    particle.Position = UDim2.new(0, math.random(0, 1920), 0, math.random(0, 1080))
+    particle.BackgroundColor3 = Color3.fromRGB(150, 100, 255)
+    particle.BackgroundTransparency = 0.5
+    particle.BorderSizePixel = 0
+    particle.ZIndex = 2
+    particle.Parent = Particles
+    
+    table.insert(particles, {
+        frame = particle,
+        speed = math.random(1, 3),
+        x = particle.Position.X.Offset,
+        y = particle.Position.Y.Offset
+    })
+end
+
+task.spawn(function()
+    while ScreenGui.Parent do
+        for _, p in ipairs(particles) do
+            p.y = p.y + p.speed
+            if p.y > 1080 then
+                p.y = -10
+                p.x = math.random(0, 1920)
+            end
+            p.frame.Position = UDim2.new(0, p.x, 0, p.y)
+        end
+        task.wait(0.05)
+    end
+end)
+
+-- ========== RIGHT SIDE (BYPASS & PROCESSING combined) ==========
+local RightContainer = Instance.new("Frame")
+RightContainer.Size = UDim2.new(0, 200, 0, 80)
+RightContainer.Position = UDim2.new(1, -220, 0.35, -40)
+RightContainer.BackgroundTransparency = 1
+RightContainer.ZIndex = 3
+RightContainer.Parent = Background
+
+local RightGlow = Instance.new("Frame")
+RightGlow.Size = UDim2.new(1, 0, 1, 0)
+RightGlow.BackgroundColor3 = Color3.fromRGB(100, 50, 255)
+RightGlow.BackgroundTransparency = 0.9
+RightGlow.BorderSizePixel = 0
+RightGlow.ZIndex = 2
+RightGlow.Parent = RightContainer
+Instance.new("UICorner", RightGlow).CornerRadius = UDim.new(0, 8)
+
+local BypassText = Instance.new("TextLabel")
+BypassText.Size = UDim2.new(1, 0, 0.5, 0)
+BypassText.Position = UDim2.new(0, 0, 0, 0)
+BypassText.BackgroundTransparency = 1
+BypassText.Text = "⟡ BYPASS ⟡"
+BypassText.TextColor3 = Color3.fromRGB(150, 100, 255)
+BypassText.TextSize = 18
+BypassText.Font = Enum.Font.GothamBold
+BypassText.TextXAlignment = Enum.TextXAlignment.Center
+BypassText.ZIndex = 3
+BypassText.Parent = RightContainer
+
+local ProcessingText = Instance.new("TextLabel")
+ProcessingText.Size = UDim2.new(1, 0, 0.5, 0)
+ProcessingText.Position = UDim2.new(0, 0, 0.5, 0)
+ProcessingText.BackgroundTransparency = 1
+ProcessingText.Text = "PROCESSING ⟡"
+ProcessingText.TextColor3 = Color3.fromRGB(150, 100, 255)
+ProcessingText.TextSize = 18
+ProcessingText.Font = Enum.Font.GothamBold
+ProcessingText.TextXAlignment = Enum.TextXAlignment.Center
+ProcessingText.ZIndex = 3
+ProcessingText.Parent = RightContainer
+
+-- Glow animation
+task.spawn(function()
+    local glow = 0
+    local dir = 0.05
+    while ScreenGui.Parent do
+        glow = glow + dir
+        if glow > 1 then 
+            glow = 1
+            dir = -0.05
+        elseif glow < 0.5 then
+            glow = 0.5
+            dir = 0.05
+        end
+        RightGlow.BackgroundTransparency = 0.9 - (glow * 0.3)
+        local colorVal = 150 + glow * 50
+        BypassText.TextColor3 = Color3.fromRGB(colorVal, 100 + glow * 30, 255)
+        ProcessingText.TextColor3 = Color3.fromRGB(colorVal, 100 + glow * 30, 255)
+        task.wait(0.05)
+    end
+end)
+
+task.spawn(function()
+    local dots = 0
+    while ScreenGui.Parent do
+        dots = (dots % 3) + 1
+        ProcessingText.Text = "PROCESSING" .. string.rep(" ⟡", dots)
+        task.wait(0.4)
+    end
+end)
+
+-- ========== LEFT SIDE - GALAGA MINI GAME ==========
+local GameContainer = Instance.new("Frame")
+GameContainer.Size = UDim2.new(0, 320, 0, 400)
+GameContainer.Position = UDim2.new(0, 20, 0.5, -200)
+GameContainer.BackgroundColor3 = Color3.fromRGB(10, 10, 18)
+GameContainer.BackgroundTransparency = 0.2
+GameContainer.BorderSizePixel = 0
+GameContainer.ZIndex = 3
+GameContainer.Parent = Background
+Instance.new("UICorner", GameContainer).CornerRadius = UDim.new(0, 12)
+
+-- Game border glow
+local GameBorder = Instance.new("Frame")
+GameBorder.Size = UDim2.new(1, 2, 1, 2)
+GameBorder.Position = UDim2.new(0, -1, 0, -1)
+GameBorder.BackgroundTransparency = 1
+GameBorder.BorderSizePixel = 0
+GameBorder.ZIndex = 2
+GameBorder.Parent = GameContainer
+local BorderGrad = Instance.new("UIGradient", GameBorder)
+BorderGrad.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(100, 50, 255)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(200, 100, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(100, 50, 255))
+})
+
+-- Game title
+local GameTitle = Instance.new("TextLabel")
+GameTitle.Size = UDim2.new(1, 0, 0, 24)
+GameTitle.Position = UDim2.new(0, 0, 0, 5)
+GameTitle.BackgroundTransparency = 1
+GameTitle.Text = "GALAGA: RETRO ARCADE"
+GameTitle.TextColor3 = Color3.fromRGB(150, 100, 255)
+GameTitle.TextSize = 12
+GameTitle.Font = Enum.Font.GothamBold
+GameTitle.TextXAlignment = Enum.TextXAlignment.Center
+GameTitle.ZIndex = 4
+GameTitle.Parent = GameContainer
+
+-- Score display
+local ScoreLabel = Instance.new("TextLabel")
+ScoreLabel.Size = UDim2.new(0.5, -10, 0, 20)
+ScoreLabel.Position = UDim2.new(0, 10, 0, 32)
+ScoreLabel.BackgroundTransparency = 1
+ScoreLabel.Text = "SCORE: 0"
+ScoreLabel.TextColor3 = Color3.fromRGB(100, 255, 150)
+ScoreLabel.TextSize = 12
+ScoreLabel.Font = Enum.Font.GothamBold
+ScoreLabel.TextXAlignment = Enum.TextXAlignment.Left
+ScoreLabel.ZIndex = 4
+ScoreLabel.Parent = GameContainer
+
+-- Lives display (simple)
+local LivesLabel = Instance.new("TextLabel")
+LivesLabel.Size = UDim2.new(0.5, -10, 0, 20)
+LivesLabel.Position = UDim2.new(0.5, 0, 0, 32)
+LivesLabel.BackgroundTransparency = 1
+LivesLabel.Text = "LIVES: 3"
+LivesLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+LivesLabel.TextSize = 12
+LivesLabel.Font = Enum.Font.GothamBold
+LivesLabel.TextXAlignment = Enum.TextXAlignment.Right
+LivesLabel.ZIndex = 4
+LivesLabel.Parent = GameContainer
+
+-- Game canvas (where objects move)
+local Canvas = Instance.new("Frame")
+Canvas.Size = UDim2.new(1, -20, 1, -80)
+Canvas.Position = UDim2.new(0, 10, 0, 60)
+Canvas.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+Canvas.BackgroundTransparency = 0.7
+Canvas.BorderSizePixel = 0
+Canvas.ZIndex = 3
+Canvas.Parent = GameContainer
+Instance.new("UICorner", Canvas).CornerRadius = UDim.new(0, 8)
+
+-- Touch controls (buttons)
+local ControlPanel = Instance.new("Frame")
+ControlPanel.Size = UDim2.new(1, -20, 0, 40)
+ControlPanel.Position = UDim2.new(0, 10, 1, -45)
+ControlPanel.BackgroundTransparency = 1
+ControlPanel.ZIndex = 4
+ControlPanel.Parent = GameContainer
+
+local LeftBtn = Instance.new("TextButton")
+LeftBtn.Size = UDim2.new(0, 80, 0, 35)
+LeftBtn.Position = UDim2.new(0, 0, 0, 0)
+LeftBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
+LeftBtn.Text = "◀ LEFT"
+LeftBtn.TextColor3 = Color3.fromRGB(200, 150, 255)
+LeftBtn.TextSize = 12
+LeftBtn.Font = Enum.Font.GothamBold
+LeftBtn.ZIndex = 5
+LeftBtn.Parent = ControlPanel
+Instance.new("UICorner", LeftBtn).CornerRadius = UDim.new(0, 6)
+
+local FireBtn = Instance.new("TextButton")
+FireBtn.Size = UDim2.new(0, 80, 0, 35)
+FireBtn.Position = UDim2.new(0.5, -40, 0, 0)
+FireBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
+FireBtn.Text = "FIRE"
+FireBtn.TextColor3 = Color3.fromRGB(200, 150, 255)
+FireBtn.TextSize = 12
+FireBtn.Font = Enum.Font.GothamBold
+FireBtn.ZIndex = 5
+FireBtn.Parent = ControlPanel
+Instance.new("UICorner", FireBtn).CornerRadius = UDim.new(0, 6)
+
+local RightBtn = Instance.new("TextButton")
+RightBtn.Size = UDim2.new(0, 80, 0, 35)
+RightBtn.Position = UDim2.new(1, -80, 0, 0)
+RightBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
+RightBtn.Text = "RIGHT ▶"
+RightBtn.TextColor3 = Color3.fromRGB(200, 150, 255)
+RightBtn.TextSize = 12
+RightBtn.Font = Enum.Font.GothamBold
+RightBtn.ZIndex = 5
+RightBtn.Parent = ControlPanel
+Instance.new("UICorner", RightBtn).CornerRadius = UDim.new(0, 6)
+
+-- Game variables
+local player = nil
+local bullets = {}
+local enemies = {}
+local score = 0
+local lives = 3
+local gameActive = true
+local shootCooldown = false
+local playerSpeed = 200 -- pixels per second
+local bulletSpeed = 300
+local enemySpeed = 80
+local canvasSize = Canvas.AbsoluteSize
+local playerPosX = 0.5 -- relative to canvas width
+local lastUpdate = tick()
+
+-- Create player ship (a simple triangle using frames)
+local function createPlayer()
+    if player then player:Destroy() end
+    player = Instance.new("Frame")
+    player.Size = UDim2.new(0, 20, 0, 20)
+    player.BackgroundColor3 = Color3.fromRGB(100, 200, 255)
+    player.BorderSizePixel = 0
+    player.ZIndex = 4
+    player.Parent = Canvas
+    
+    -- Triangle shape (using rotation, but simpler: just a square with gradient)
+    local glow = Instance.new("Frame")
+    glow.Size = UDim2.new(1, 4, 1, 4)
+    glow.Position = UDim2.new(0, -2, 0, -2)
+    glow.BackgroundColor3 = Color3.fromRGB(100, 150, 255)
+    glow.BackgroundTransparency = 0.7
+    glow.BorderSizePixel = 0
+    glow.ZIndex = 3
+    glow.Parent = player
+    Instance.new("UICorner", glow).CornerRadius = UDim.new(1, 0)
+    
+    Instance.new("UICorner", player).CornerRadius = UDim.new(1, 0)
+    player.Position = UDim2.new(0.5, -10, 1, -30)
+    playerPosX = 0.5
+end
+
+-- Create enemy
+local function createEnemy(x, y)
+    local enemy = Instance.new("Frame")
+    enemy.Size = UDim2.new(0, 16, 0, 16)
+    enemy.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
+    enemy.BorderSizePixel = 0
+    enemy.ZIndex = 4
+    enemy.Parent = Canvas
+    Instance.new("UICorner", enemy).CornerRadius = UDim.new(0, 3)
+    
+    local eye = Instance.new("Frame")
+    eye.Size = UDim2.new(0, 4, 0, 4)
+    eye.Position = UDim2.new(0.5, -2, 0.5, -2)
+    eye.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    eye.BackgroundTransparency = 0.3
+    eye.BorderSizePixel = 0
+    eye.ZIndex = 5
+    eye.Parent = enemy
+    Instance.new("UICorner", eye).CornerRadius = UDim.new(1, 0)
+    
+    enemy.Position = UDim2.new(0, x, 0, y)
+    return enemy
+end
+
+-- Spawn initial enemies (grid)
+local function spawnEnemies()
+    for _, e in ipairs(enemies) do e:Destroy() end
+    enemies = {}
+    local rows = 3
+    local cols = 5
+    local startX = 40
+    local startY = 30
+    local spacingX = 45
+    local spacingY = 40
+    for row = 1, rows do
+        for col = 1, cols do
+            local x = startX + (col-1)*spacingX
+            local y = startY + (row-1)*spacingY
+            table.insert(enemies, createEnemy(x, y))
+        end
+    end
+end
+
+-- Create bullet
+local function shoot()
+    if not gameActive or shootCooldown then return end
+    shootCooldown = true
+    task.delay(0.3, function() shootCooldown = false end)
+    
+    local bullet = Instance.new("Frame")
+    bullet.Size = UDim2.new(0, 3, 0, 8)
+    bullet.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
+    bullet.BorderSizePixel = 0
+    bullet.ZIndex = 4
+    bullet.Parent = Canvas
+    Instance.new("UICorner", bullet).CornerRadius = UDim.new(1, 0)
+    
+    local playerAbsPos = player.AbsolutePosition
+    local canvasAbsPos = Canvas.AbsolutePosition
+    local x = playerAbsPos.X - canvasAbsPos.X + player.AbsoluteSize.X/2 - 1.5
+    local y = playerAbsPos.Y - canvasAbsPos.Y - 5
+    bullet.Position = UDim2.new(0, x, 0, y)
+    
+    table.insert(bullets, bullet)
+end
+
+-- Update game state
+local function updateGame(dt)
+    if not gameActive or not player then return end
+    
+    -- Move player based on touch/button input (handled separately)
+    local canvasAbs = Canvas.AbsoluteSize
+    local minX = 10
+    local maxX = canvasAbs.X - player.AbsoluteSize.X - 10
+    local currentX = player.AbsolutePosition.X - Canvas.AbsolutePosition.X
+    local newX = currentX + (moveLeft and -playerSpeed*dt or moveRight and playerSpeed*dt or 0)
+    newX = math.clamp(newX, minX, maxX)
+    player.Position = UDim2.new(0, newX, 1, -30)
+    playerPosX = newX / canvasAbs.X
+    
+    -- Move bullets
+    for i = #bullets, 1, -1 do
+        local b = bullets[i]
+        if not b.Parent then table.remove(bullets, i) continue end
+        local y = b.Position.Y.Offset - bulletSpeed * dt
+        if y < -20 then
+            b:Destroy()
+            table.remove(bullets, i)
+        else
+            b.Position = UDim2.new(0, b.Position.X.Offset, 0, y)
+        end
+    end
+    
+    -- Move enemies (simple left-right bounce)
+    local enemyMoveX = 0
+    local edgeHit = false
+    for _, e in ipairs(enemies) do
+        local x = e.Position.X.Offset
+        if x < 10 or x > Canvas.AbsoluteSize.X - e.AbsoluteSize.X - 10 then
+            edgeHit = true
+        end
+    end
+    if edgeHit then
+        for _, e in ipairs(enemies) do
+            local y = e.Position.Y.Offset + 15
+            e.Position = UDim2.new(0, e.Position.X.Offset, 0, y)
+        end
+        enemyMoveX = -enemyMoveX
+    else
+        enemyMoveX = (math.sin(tick()*2) > 0 and 30 or -30) * dt
+    end
+    
+    for _, e in ipairs(enemies) do
+        local x = e.Position.X.Offset + enemyMoveX
+        x = math.clamp(x, 10, Canvas.AbsoluteSize.X - e.AbsoluteSize.X - 10)
+        e.Position = UDim2.new(0, x, 0, e.Position.Y.Offset)
+    end
+    
+    -- Collisions: bullets vs enemies
+    for i = #bullets, 1, -1 do
+        local b = bullets[i]
+        local bPos = b.Position
+        local bAbsPos = b.AbsolutePosition
+        local hit = false
+        for j = #enemies, 1, -1 do
+            local e = enemies[j]
+            if e and e.Parent then
+                local eAbsPos = e.AbsolutePosition
+                if math.abs(bAbsPos.X - eAbsPos.X) < e.AbsoluteSize.X/2 + b.AbsoluteSize.X/2 and
+                   math.abs(bAbsPos.Y - eAbsPos.Y) < e.AbsoluteSize.Y/2 + b.AbsoluteSize.Y/2 then
+                    e:Destroy()
+                    table.remove(enemies, j)
+                    b:Destroy()
+                    table.remove(bullets, i)
+                    score = score + 10
+                    ScoreLabel.Text = "SCORE: " .. score
+                    hit = true
+                    break
+                end
+            end
+        end
+        if hit then continue end
+    end
+    
+    -- Enemy vs player collision
+    for _, e in ipairs(enemies) do
+        local eAbs = e.AbsolutePosition
+        local pAbs = player.AbsolutePosition
+        if math.abs(eAbs.X - pAbs.X) < player.AbsoluteSize.X and
+           math.abs(eAbs.Y - pAbs.Y) < player.AbsoluteSize.Y then
+            lives = lives - 1
+            LivesLabel.Text = "LIVES: " .. lives
+            if lives <= 0 then
+                gameActive = false
+                player:Destroy()
+                player = nil
+                for _, b in ipairs(bullets) do b:Destroy() end
+                bullets = {}
+                for _, e in ipairs(enemies) do e:Destroy() end
+                enemies = {}
+                local gameOverText = Instance.new("TextLabel")
+                gameOverText.Size = UDim2.new(1, 0, 1, 0)
+                gameOverText.BackgroundTransparency = 1
+                gameOverText.Text = "GAME OVER\nTap to restart"
+                gameOverText.TextColor3 = Color3.fromRGB(255, 100, 100)
+                gameOverText.TextSize = 18
+                gameOverText.Font = Enum.Font.GothamBold
+                gameOverText.TextWrapped = true
+                gameOverText.ZIndex = 5
+                gameOverText.Parent = Canvas
+                local function restart()
+                    gameOverText:Destroy()
+                    gameActive = true
+                    lives = 3
+                    score = 0
+                    LivesLabel.Text = "LIVES: 3"
+                    ScoreLabel.Text = "SCORE: 0"
+                    createPlayer()
+                    spawnEnemies()
+                end
+                gameOverText.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        restart()
+                    end
+                end)
+            else
+                -- Respawn player and reset enemies
+                if player then player:Destroy() end
+                createPlayer()
+                -- Remove all enemies and spawn new wave
+                for _, e in ipairs(enemies) do e:Destroy() end
+                enemies = {}
+                spawnEnemies()
+                for _, b in ipairs(bullets) do b:Destroy() end
+                bullets = {}
+            end
+            break
+        end
+    end
+    
+    -- If all enemies destroyed, spawn new wave
+    if #enemies == 0 and gameActive then
+        spawnEnemies()
+    end
+end
+
+-- Input handling
+local moveLeft = false
+local moveRight = false
+
+LeftBtn.MouseButton1Down:Connect(function() moveLeft = true end)
+LeftBtn.MouseButton1Up:Connect(function() moveLeft = false end)
+LeftBtn.MouseLeave:Connect(function() moveLeft = false end)
+RightBtn.MouseButton1Down:Connect(function() moveRight = true end)
+RightBtn.MouseButton1Up:Connect(function() moveRight = false end)
+RightBtn.MouseLeave:Connect(function() moveRight = false end)
+
+FireBtn.MouseButton1Click:Connect(function() shoot() end)
+
+-- Touchscreen support: also allow tapping on canvas to fire, and drag left/right on canvas to move
+local dragging = false
+local lastDragX = 0
+Canvas.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+        if input.Position.Y > Canvas.AbsolutePosition.Y + Canvas.AbsoluteSize.Y/2 then
+            -- lower half: fire
+            shoot()
+        else
+            dragging = true
+            lastDragX = input.Position.X
+        end
+    end
+end)
+Canvas.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
+    end
+end)
+Canvas.InputChanged:Connect(function(input)
+    if dragging and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement) then
+        local delta = input.Position.X - lastDragX
+        if math.abs(delta) > 5 then
+            if delta > 0 then moveRight = true; moveLeft = false
+            else moveLeft = true; moveRight = false end
+            lastDragX = input.Position.X
+        end
+    end
+end)
+
+-- Game loop
+createPlayer()
+spawnEnemies()
+local heartbeat
+heartbeat = RunService.Heartbeat:Connect(function(dt)
+    local now = tick()
+    dt = math.min(dt, 0.033)
+    updateGame(dt)
+end)
+
+-- Cleanup on screen destroy
+ScreenGui.Destroying:Connect(function()
+    if heartbeat then heartbeat:Disconnect() end
+end)
+
+-- ========== MAIN CARD (unchanged except visual) ==========
+local Card = Instance.new("Frame")
+Card.Size = UDim2.new(0, 420, 0, 480)
+Card.Position = UDim2.new(0.5, -210, 0.5, -240)
+Card.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+Card.BackgroundTransparency = 0.15
+Card.BorderSizePixel = 0
+Card.ZIndex = 2
+Card.Parent = Background
+
+local CardCorner = Instance.new("UICorner", Card)
+CardCorner.CornerRadius = UDim.new(0, 20)
+
+-- Border glow
+local CardBorder = Instance.new("Frame")
+CardBorder.Size = UDim2.new(1, 2, 1, 2)
+CardBorder.Position = UDim2.new(0, -1, 0, -1)
+CardBorder.BackgroundTransparency = 1
+CardBorder.BorderSizePixel = 0
+CardBorder.ZIndex = 1
+CardBorder.Parent = Card
+
+local BorderGradient = Instance.new("UIGradient", CardBorder)
+BorderGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(100, 50, 255)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(200, 100, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(100, 50, 255))
+})
+
+-- Glass effect
+local Glass = Instance.new("Frame")
+Glass.Size = UDim2.new(1, 0, 1, 0)
+Glass.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+Glass.BackgroundTransparency = 0.95
+Glass.BorderSizePixel = 0
+Glass.ZIndex = 1
+Glass.Parent = Card
+Instance.new("UICorner", Glass).CornerRadius = UDim.new(0, 20)
+
+-- Header
+local HeaderFrame = Instance.new("Frame")
+HeaderFrame.Size = UDim2.new(1, -30, 0, 60)
+HeaderFrame.Position = UDim2.new(0, 15, 0, 15)
+HeaderFrame.BackgroundTransparency = 1
+HeaderFrame.ZIndex = 3
+HeaderFrame.Parent = Card
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 32)
+Title.Position = UDim2.new(0, 0, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "> THECODING SCRIPT"
+Title.TextColor3 = Color3.fromRGB(200, 150, 255)
+Title.TextSize = 22
+Title.Font = Enum.Font.GothamBold
+Title.TextXAlignment = Enum.TextXAlignment.Center
+Title.ZIndex = 3
+Title.Parent = HeaderFrame
+
+local SubTitle = Instance.new("TextLabel")
+SubTitle.Size = UDim2.new(1, 0, 0, 18)
+SubTitle.Position = UDim2.new(0, 0, 0, 34)
+SubTitle.BackgroundTransparency = 1
+SubTitle.Text = ">> CYBERPUNK CORE v2.4.7 <<"
+SubTitle.TextColor3 = Color3.fromRGB(150, 100, 200)
+SubTitle.TextSize = 11
+SubTitle.Font = Enum.Font.GothamBold
+SubTitle.TextXAlignment = Enum.TextXAlignment.Center
+SubTitle.ZIndex = 3
+SubTitle.Parent = HeaderFrame
+
+local EstTime = Instance.new("TextLabel")
+EstTime.Size = UDim2.new(1, 0, 0, 12)
+EstTime.Position = UDim2.new(0, 0, 0, 52)
+EstTime.BackgroundTransparency = 1
+EstTime.Text = "⏣ " .. os.date("%H:%M:%S") .. " ⏣ SYSTEM ONLINE"
+EstTime.TextColor3 = Color3.fromRGB(100, 80, 150)
+EstTime.TextSize = 9
+EstTime.Font = Enum.Font.Gotham
+EstTime.TextXAlignment = Enum.TextXAlignment.Center
+EstTime.ZIndex = 3
+EstTime.Parent = HeaderFrame
+
+task.spawn(function()
+    while ScreenGui.Parent do
+        EstTime.Text = "⏣ " .. os.date("%H:%M:%S") .. " ⏣ SYSTEM ONLINE"
+        task.wait(1)
+    end
+end)
+
+-- Log Frame (unchanged)
+local LogFrame = Instance.new("Frame")
+LogFrame.Size = UDim2.new(1, -30, 0, 220)
+LogFrame.Position = UDim2.new(0, 15, 0, 85)
+LogFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
+LogFrame.BackgroundTransparency = 0.3
+LogFrame.BorderSizePixel = 0
+LogFrame.ZIndex = 3
+LogFrame.ClipsDescendants = true
+LogFrame.Parent = Card
+Instance.new("UICorner", LogFrame).CornerRadius = UDim.new(0, 8)
+
+local TermHeader = Instance.new("Frame")
+TermHeader.Size = UDim2.new(1, 0, 0, 24)
+TermHeader.BackgroundColor3 = Color3.fromRGB(15, 15, 22)
+TermHeader.BorderSizePixel = 0
+TermHeader.ZIndex = 4
+TermHeader.Parent = LogFrame
+Instance.new("UICorner", TermHeader).CornerRadius = UDim.new(0, 8)
+
+local TermTitle = Instance.new("TextLabel")
+TermTitle.Size = UDim2.new(1, 0, 1, 0)
+TermTitle.BackgroundTransparency = 1
+TermTitle.Text = "⟡ TERMINAL ⟡"
+TermTitle.TextColor3 = Color3.fromRGB(150, 100, 255)
+TermTitle.TextSize = 10
+TermTitle.Font = Enum.Font.GothamBold
+TermTitle.TextXAlignment = Enum.TextXAlignment.Center
+TermTitle.ZIndex = 4
+TermTitle.Parent = TermHeader
+
+local LogContainer = Instance.new("Frame")
+LogContainer.Size = UDim2.new(1, -10, 1, -34)
+LogContainer.Position = UDim2.new(0, 5, 0, 29)
+LogContainer.BackgroundTransparency = 1
+LogContainer.ZIndex = 3
+LogContainer.Parent = LogFrame
+
+local LogLayout = Instance.new("UIListLayout", LogContainer)
+LogLayout.SortOrder = Enum.SortOrder.LayoutOrder
+LogLayout.Padding = UDim.new(0, 2)
+
+local logLines = {}
+local logIndex = 0
+
+local logMessages = {
+    {txt = "⟡ [SUCCESS] TheCoding core initialized.",          color = Color3.fromRGB(100, 255, 150)},
+    {txt = "⟡ Establishing neural link...",                     color = Color3.fromRGB(150, 100, 255)},
+    {txt = "⟡ Bypassing firewall layers...",                    color = Color3.fromRGB(150, 100, 255)},
+    {txt = "⟡ Injecting cybernetic enhancements...",            color = Color3.fromRGB(150, 100, 255)},
+    {txt = "⟡ Decrypting quantum payload...",                   color = Color3.fromRGB(150, 100, 255)},
+    {txt = "⟡ [SUCCESS] Neural interface active.",              color = Color3.fromRGB(100, 255, 150)},
+    {txt = "⟡ Synchronizing with matrix...",                    color = Color3.fromRGB(150, 100, 255)},
+    {txt = "⟡ Loading cyberdeck modules...",                    color = Color3.fromRGB(150, 100, 255)},
+    {txt = "⟡ Optimizing execution threads...",                 color = Color3.fromRGB(150, 100, 255)},
+    {txt = "⟡ [SUCCESS] Weapon system online.",                 color = Color3.fromRGB(100, 255, 150)},
+    {txt = "⟡ Calibrating targeting protocols...",              color = Color3.fromRGB(150, 100, 255)},
+    {txt = "⟡ Evading anti-cheat detection...",                 color = Color3.fromRGB(150, 100, 255)},
+    {txt = "⟡ [SUCCESS] Stealth mode engaged.",                 color = Color3.fromRGB(100, 255, 150)},
+    {txt = "⟡ Finalizing system boot...",                       color = Color3.fromRGB(150, 100, 255)},
+}
+
+local function addLog(msg, color)
+    logIndex += 1
+    local line = Instance.new("TextLabel")
+    line.Size = UDim2.new(1, 0, 0, 14)
+    line.BackgroundTransparency = 1
+    line.Text = msg
+    line.TextColor3 = color or Color3.fromRGB(150, 100, 200)
+    line.TextSize = 10
+    line.Font = Enum.Font.Code
+    line.TextXAlignment = Enum.TextXAlignment.Left
+    line.LayoutOrder = logIndex
+    line.ZIndex = 4
+    line.Parent = LogContainer
+
+    table.insert(logLines, line)
+
+    if #logLines > 12 then
+        local old = table.remove(logLines, 1)
+        old:Destroy()
+    end
+end
+
+-- Progress Bar
+local ProgressContainer = Instance.new("Frame")
+ProgressContainer.Size = UDim2.new(1, -30, 0, 40)
+ProgressContainer.Position = UDim2.new(0, 15, 0, 315)
+ProgressContainer.BackgroundTransparency = 1
+ProgressContainer.ZIndex = 3
+ProgressContainer.Parent = Card
+
+local ProgressTrack = Instance.new("Frame")
+ProgressTrack.Size = UDim2.new(1, 0, 0, 6)
+ProgressTrack.Position = UDim2.new(0, 0, 0, 0)
+ProgressTrack.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+ProgressTrack.BorderSizePixel = 0
+ProgressTrack.ZIndex = 3
+ProgressTrack.Parent = ProgressContainer
+Instance.new("UICorner", ProgressTrack).CornerRadius = UDim.new(1, 0)
+
+local ProgressFill = Instance.new("Frame")
+ProgressFill.Size = UDim2.new(0, 0, 1, 0)
+ProgressFill.BackgroundColor3 = Color3.fromRGB(150, 100, 255)
+ProgressFill.BorderSizePixel = 0
+ProgressFill.ZIndex = 4
+ProgressFill.Parent = ProgressTrack
+Instance.new("UICorner", ProgressFill).CornerRadius = UDim.new(1, 0)
+
+local ProgressGlow = Instance.new("Frame")
+ProgressGlow.Size = UDim2.new(1, 0, 2, 0)
+ProgressGlow.Position = UDim2.new(0, 0, 0, -2)
+ProgressGlow.BackgroundColor3 = Color3.fromRGB(150, 100, 255)
+ProgressGlow.BackgroundTransparency = 0.5
+ProgressGlow.BorderSizePixel = 0
+ProgressGlow.ZIndex = 3
+ProgressGlow.Parent = ProgressFill
+Instance.new("UICorner", ProgressGlow).CornerRadius = UDim.new(1, 0)
+
+local ProgressPct = Instance.new("TextLabel")
+ProgressPct.Size = UDim2.new(1, 0, 0, 20)
+ProgressPct.Position = UDim2.new(0, 0, 0, 12)
+ProgressPct.BackgroundTransparency = 1
+ProgressPct.Text = "0%"
+ProgressPct.TextColor3 = Color3.fromRGB(200, 150, 255)
+ProgressPct.TextSize = 14
+ProgressPct.Font = Enum.Font.GothamBold
+ProgressPct.TextXAlignment = Enum.TextXAlignment.Center
+ProgressPct.ZIndex = 3
+ProgressPct.Parent = ProgressContainer
+
+-- Footer
+local FooterLine = Instance.new("Frame")
+FooterLine.Size = UDim2.new(1, -30, 0, 1)
+FooterLine.Position = UDim2.new(0, 15, 0, 375)
+FooterLine.BackgroundColor3 = Color3.fromRGB(150, 100, 255)
+FooterLine.BackgroundTransparency = 0.5
+FooterLine.BorderSizePixel = 0
+FooterLine.ZIndex = 3
+FooterLine.Parent = Card
+
+local Footer1 = Instance.new("TextLabel")
+Footer1.Size = UDim2.new(0.5, -20, 0, 18)
+Footer1.Position = UDim2.new(0, 15, 0, 385)
+Footer1.BackgroundTransparency = 1
+Footer1.Text = "⚠ SYSTEM PROTECTED"
+Footer1.TextColor3 = Color3.fromRGB(100, 80, 150)
+Footer1.TextSize = 9
+Footer1.Font = Enum.Font.Gotham
+Footer1.TextXAlignment = Enum.TextXAlignment.Left
+Footer1.ZIndex = 3
+Footer1.Parent = Card
+
+local Footer2 = Instance.new("TextLabel")
+Footer2.Size = UDim2.new(0.5, -20, 0, 18)
+Footer2.Position = UDim2.new(0.5, 5, 0, 385)
+Footer2.BackgroundTransparency = 1
+Footer2.Text = "⟡ SYNCING ⟡"
+Footer2.TextColor3 = Color3.fromRGB(150, 100, 200)
+Footer2.TextSize = 9
+Footer2.Font = Enum.Font.Gotham
+Footer2.TextXAlignment = Enum.TextXAlignment.Right
+Footer2.ZIndex = 3
+Footer2.Parent = Card
+
+local Footer3 = Instance.new("TextLabel")
+Footer3.Size = UDim2.new(1, -30, 0, 14)
+Footer3.Position = UDim2.new(0, 15, 0, 405)
+Footer3.BackgroundTransparency = 1
+Footer3.Text = "> THECODING SCRIPT v2.4.7 <"
+Footer3.TextColor3 = Color3.fromRGB(80, 60, 120)
+Footer3.TextSize = 8
+Footer3.Font = Enum.Font.Gotham
+Footer3.TextXAlignment = Enum.TextXAlignment.Center
+Footer3.ZIndex = 3
+Footer3.Parent = Card
+
+task.spawn(function()
+    local pulse = 0
+    local dir = 0.03
+    while ScreenGui.Parent do
+        pulse = pulse + dir
+        if pulse > 1 then 
+            pulse = 1
+            dir = -0.03
+        elseif pulse < 0.3 then
+            pulse = 0.3
+            dir = 0.03
+        end
+        Footer2.TextColor3 = Color3.fromRGB(150 + pulse * 50, 100 + pulse * 30, 200 + pulse * 55)
+        task.wait(0.05)
+    end
+end)
+
+-- Appearance Animation
+Background.BackgroundTransparency = 1
+Card.BackgroundTransparency = 0.15
+Card.Size = UDim2.new(0, 0, 0, 0)
+Card.Position = UDim2.new(0.5, 0, 0.5, 0)
+
+TweenService:Create(Background, TweenInfo.new(0.4), {BackgroundTransparency = 0}):Play()
+TweenService:Create(Card, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+    Size = UDim2.new(0, 420, 0, 480),
+    Position = UDim2.new(0.5, -210, 0.5, -240)
+}):Play()
+task.wait(0.3)
+
+-- Logs
+task.spawn(function()
+    for _, log in ipairs(logMessages) do
+        task.wait(math.random(2, 5) * 0.1)
+        addLog(log.txt, log.color)
+    end
+    while ScreenGui.Parent do
+        for _, log in ipairs(logMessages) do
+            task.wait(math.random(4, 8) * 0.1)
+            addLog(log.txt, log.color)
+        end
+    end
+end)
+
+-- Progress
+local progress = 0
+local steps = {
+    {target = 8,    speed = 0.8},
+    {target = 18,   speed = 1.0},
+    {target = 29,   speed = 1.2},
+    {target = 41,   speed = 1.4},
+    {target = 55,   speed = 1.6},
+    {target = 67,   speed = 1.4},
+    {target = 76,   speed = 1.8},
+    {target = 84,   speed = 2.0},
+    {target = 91,   speed = 1.8},
+    {target = 96.2, speed = 2.5},
+}
+
+for _, step in ipairs(steps) do
+    while progress < step.target do
+        progress = math.min(progress + 0.3, step.target)
+        TweenService:Create(ProgressFill, TweenInfo.new(0.1), {
+            Size = UDim2.new(progress / 100, 0, 1, 0)
+        }):Play()
+        TweenService:Create(ProgressGlow, TweenInfo.new(0.1), {
+            Size = UDim2.new(progress / 100, 0, 2, 0)
+        }):Play()
+        ProgressPct.Text = string.format("%.1f%%", progress)
+        task.wait(step.speed * 0.15)
+    end
+    task.wait(step.speed)
+end
+
+ProgressPct.Text = "96.2%"
+print("[TheCoding Script] Loading stuck at 96.2%")
