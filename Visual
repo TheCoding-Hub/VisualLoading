@@ -1,5 +1,5 @@
 -- Loading Screen | TheCoding Script
--- Modern Cyberpunk Style Loading Screen with Galaga Mini-Game
+-- Modern Cyberpunk Style Loading Screen with Flappy Bird Mini-Game
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -195,7 +195,7 @@ task.spawn(function()
     end
 end)
 
--- ========== LEFT SIDE - GALAGA MINI GAME ==========
+-- ========== LEFT SIDE - FLAPPY BIRD MINI GAME ==========
 local GameContainer = Instance.new("Frame")
 GameContainer.Size = UDim2.new(0, 320, 0, 400)
 GameContainer.Position = UDim2.new(0, 20, 0.5, -200)
@@ -226,7 +226,7 @@ local GameTitle = Instance.new("TextLabel")
 GameTitle.Size = UDim2.new(1, 0, 0, 24)
 GameTitle.Position = UDim2.new(0, 0, 0, 5)
 GameTitle.BackgroundTransparency = 1
-GameTitle.Text = "GALAGA: RETRO ARCADE"
+GameTitle.Text = "FLAPPY BIRD: CYBER EDITION"
 GameTitle.TextColor3 = Color3.fromRGB(150, 100, 255)
 GameTitle.TextSize = 12
 GameTitle.Font = Enum.Font.GothamBold
@@ -247,20 +247,20 @@ ScoreLabel.TextXAlignment = Enum.TextXAlignment.Left
 ScoreLabel.ZIndex = 4
 ScoreLabel.Parent = GameContainer
 
--- Lives display (simple)
-local LivesLabel = Instance.new("TextLabel")
-LivesLabel.Size = UDim2.new(0.5, -10, 0, 20)
-LivesLabel.Position = UDim2.new(0.5, 0, 0, 32)
-LivesLabel.BackgroundTransparency = 1
-LivesLabel.Text = "LIVES: 3"
-LivesLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
-LivesLabel.TextSize = 12
-LivesLabel.Font = Enum.Font.GothamBold
-LivesLabel.TextXAlignment = Enum.TextXAlignment.Right
-LivesLabel.ZIndex = 4
-LivesLabel.Parent = GameContainer
+-- Best score display
+local BestLabel = Instance.new("TextLabel")
+BestLabel.Size = UDim2.new(0.5, -10, 0, 20)
+BestLabel.Position = UDim2.new(0.5, 0, 0, 32)
+BestLabel.BackgroundTransparency = 1
+BestLabel.Text = "BEST: 0"
+BestLabel.TextColor3 = Color3.fromRGB(255, 200, 100)
+BestLabel.TextSize = 12
+BestLabel.Font = Enum.Font.GothamBold
+BestLabel.TextXAlignment = Enum.TextXAlignment.Right
+BestLabel.ZIndex = 4
+BestLabel.Parent = GameContainer
 
--- Game canvas (where objects move)
+-- Game canvas
 local Canvas = Instance.new("Frame")
 Canvas.Size = UDim2.new(1, -20, 1, -80)
 Canvas.Position = UDim2.new(0, 10, 0, 60)
@@ -271,346 +271,313 @@ Canvas.ZIndex = 3
 Canvas.Parent = GameContainer
 Instance.new("UICorner", Canvas).CornerRadius = UDim.new(0, 8)
 
--- Touch controls (buttons)
+-- Touch controls (single button for flap)
 local ControlPanel = Instance.new("Frame")
-ControlPanel.Size = UDim2.new(1, -20, 0, 40)
-ControlPanel.Position = UDim2.new(0, 10, 1, -45)
+ControlPanel.Size = UDim2.new(1, -20, 0, 50)
+ControlPanel.Position = UDim2.new(0, 10, 1, -55)
 ControlPanel.BackgroundTransparency = 1
 ControlPanel.ZIndex = 4
 ControlPanel.Parent = GameContainer
 
-local LeftBtn = Instance.new("TextButton")
-LeftBtn.Size = UDim2.new(0, 80, 0, 35)
-LeftBtn.Position = UDim2.new(0, 0, 0, 0)
-LeftBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
-LeftBtn.Text = "◀ LEFT"
-LeftBtn.TextColor3 = Color3.fromRGB(200, 150, 255)
-LeftBtn.TextSize = 12
-LeftBtn.Font = Enum.Font.GothamBold
-LeftBtn.ZIndex = 5
-LeftBtn.Parent = ControlPanel
-Instance.new("UICorner", LeftBtn).CornerRadius = UDim.new(0, 6)
-
-local FireBtn = Instance.new("TextButton")
-FireBtn.Size = UDim2.new(0, 80, 0, 35)
-FireBtn.Position = UDim2.new(0.5, -40, 0, 0)
-FireBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
-FireBtn.Text = "FIRE"
-FireBtn.TextColor3 = Color3.fromRGB(200, 150, 255)
-FireBtn.TextSize = 12
-FireBtn.Font = Enum.Font.GothamBold
-FireBtn.ZIndex = 5
-FireBtn.Parent = ControlPanel
-Instance.new("UICorner", FireBtn).CornerRadius = UDim.new(0, 6)
-
-local RightBtn = Instance.new("TextButton")
-RightBtn.Size = UDim2.new(0, 80, 0, 35)
-RightBtn.Position = UDim2.new(1, -80, 0, 0)
-RightBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
-RightBtn.Text = "RIGHT ▶"
-RightBtn.TextColor3 = Color3.fromRGB(200, 150, 255)
-RightBtn.TextSize = 12
-RightBtn.Font = Enum.Font.GothamBold
-RightBtn.ZIndex = 5
-RightBtn.Parent = ControlPanel
-Instance.new("UICorner", RightBtn).CornerRadius = UDim.new(0, 6)
+local FlapBtn = Instance.new("TextButton")
+FlapBtn.Size = UDim2.new(1, 0, 1, 0)
+FlapBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
+FlapBtn.Text = "FLAP ↑"
+FlapBtn.TextColor3 = Color3.fromRGB(200, 150, 255)
+FlapBtn.TextSize = 14
+FlapBtn.Font = Enum.Font.GothamBold
+FlapBtn.ZIndex = 5
+FlapBtn.Parent = ControlPanel
+Instance.new("UICorner", FlapBtn).CornerRadius = UDim.new(0, 8)
 
 -- Game variables
-local player = nil
-local bullets = {}
-local enemies = {}
+local bird = nil
+local pipes = {}
 local score = 0
-local lives = 3
+local bestScore = 0
 local gameActive = true
-local shootCooldown = false
-local playerSpeed = 200 -- pixels per second
-local bulletSpeed = 300
-local enemySpeed = 80
-local canvasSize = Canvas.AbsoluteSize
-local playerPosX = 0.5 -- relative to canvas width
+local gravity = 400
+local jumpForce = -200
+local pipeSpeed = 100
+local pipeGap = 100
+local pipeWidth = 40
+local pipeSpawnTimer = 0
+local pipeSpawnInterval = 1.8
+local birdVelocity = 0
+local canvasHeight = 0
 local lastUpdate = tick()
 
--- Create player ship (a simple triangle using frames)
-local function createPlayer()
-    if player then player:Destroy() end
-    player = Instance.new("Frame")
-    player.Size = UDim2.new(0, 20, 0, 20)
-    player.BackgroundColor3 = Color3.fromRGB(100, 200, 255)
-    player.BorderSizePixel = 0
-    player.ZIndex = 4
-    player.Parent = Canvas
+-- Create bird (a simple square with a pixelated look)
+local function createBird()
+    if bird then bird:Destroy() end
+    bird = Instance.new("Frame")
+    bird.Size = UDim2.new(0, 20, 0, 20)
+    bird.BackgroundColor3 = Color3.fromRGB(255, 200, 50)
+    bird.BorderSizePixel = 0
+    bird.ZIndex = 4
+    bird.Parent = Canvas
+    Instance.new("UICorner", bird).CornerRadius = UDim.new(1, 0)
     
-    -- Triangle shape (using rotation, but simpler: just a square with gradient)
-    local glow = Instance.new("Frame")
-    glow.Size = UDim2.new(1, 4, 1, 4)
-    glow.Position = UDim2.new(0, -2, 0, -2)
-    glow.BackgroundColor3 = Color3.fromRGB(100, 150, 255)
-    glow.BackgroundTransparency = 0.7
-    glow.BorderSizePixel = 0
-    glow.ZIndex = 3
-    glow.Parent = player
-    Instance.new("UICorner", glow).CornerRadius = UDim.new(1, 0)
-    
-    Instance.new("UICorner", player).CornerRadius = UDim.new(1, 0)
-    player.Position = UDim2.new(0.5, -10, 1, -30)
-    playerPosX = 0.5
-end
-
--- Create enemy
-local function createEnemy(x, y)
-    local enemy = Instance.new("Frame")
-    enemy.Size = UDim2.new(0, 16, 0, 16)
-    enemy.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
-    enemy.BorderSizePixel = 0
-    enemy.ZIndex = 4
-    enemy.Parent = Canvas
-    Instance.new("UICorner", enemy).CornerRadius = UDim.new(0, 3)
-    
+    -- Eye
     local eye = Instance.new("Frame")
     eye.Size = UDim2.new(0, 4, 0, 4)
-    eye.Position = UDim2.new(0.5, -2, 0.5, -2)
+    eye.Position = UDim2.new(0.6, 0, 0.25, 0)
     eye.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    eye.BackgroundTransparency = 0.3
     eye.BorderSizePixel = 0
     eye.ZIndex = 5
-    eye.Parent = enemy
+    eye.Parent = bird
     Instance.new("UICorner", eye).CornerRadius = UDim.new(1, 0)
     
-    enemy.Position = UDim2.new(0, x, 0, y)
-    return enemy
-end
-
--- Spawn initial enemies (grid)
-local function spawnEnemies()
-    for _, e in ipairs(enemies) do e:Destroy() end
-    enemies = {}
-    local rows = 3
-    local cols = 5
-    local startX = 40
-    local startY = 30
-    local spacingX = 45
-    local spacingY = 40
-    for row = 1, rows do
-        for col = 1, cols do
-            local x = startX + (col-1)*spacingX
-            local y = startY + (row-1)*spacingY
-            table.insert(enemies, createEnemy(x, y))
+    -- Wing animation effect
+    local wing = Instance.new("Frame")
+    wing.Size = UDim2.new(0, 8, 0, 12)
+    wing.Position = UDim2.new(0, -5, 0.5, -6)
+    wing.BackgroundColor3 = Color3.fromRGB(255, 150, 50)
+    wing.BorderSizePixel = 0
+    wing.ZIndex = 4
+    wing.Parent = bird
+    Instance.new("UICorner", wing).CornerRadius = UDim.new(0, 2)
+    
+    bird.Position = UDim2.new(0.5, -10, 0.5, -10)
+    birdVelocity = 0
+    
+    -- Animate wing
+    task.spawn(function()
+        local angle = 0
+        while bird and bird.Parent do
+            angle = angle + 0.1
+            local wingPos = -5 + math.sin(angle) * 3
+            if wing then wing.Position = UDim2.new(0, wingPos, 0.5, -6) end
+            task.wait(0.05)
         end
-    end
+    end)
 end
 
--- Create bullet
-local function shoot()
-    if not gameActive or shootCooldown then return end
-    shootCooldown = true
-    task.delay(0.3, function() shootCooldown = false end)
-    
-    local bullet = Instance.new("Frame")
-    bullet.Size = UDim2.new(0, 3, 0, 8)
-    bullet.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
-    bullet.BorderSizePixel = 0
-    bullet.ZIndex = 4
-    bullet.Parent = Canvas
-    Instance.new("UICorner", bullet).CornerRadius = UDim.new(1, 0)
-    
-    local playerAbsPos = player.AbsolutePosition
-    local canvasAbsPos = Canvas.AbsolutePosition
-    local x = playerAbsPos.X - canvasAbsPos.X + player.AbsoluteSize.X/2 - 1.5
-    local y = playerAbsPos.Y - canvasAbsPos.Y - 5
-    bullet.Position = UDim2.new(0, x, 0, y)
-    
-    table.insert(bullets, bullet)
-end
-
--- Update game state
-local function updateGame(dt)
-    if not gameActive or not player then return end
-    
-    -- Move player based on touch/button input (handled separately)
+-- Create pipe pair
+local function createPipePair()
     local canvasAbs = Canvas.AbsoluteSize
-    local minX = 10
-    local maxX = canvasAbs.X - player.AbsoluteSize.X - 10
-    local currentX = player.AbsolutePosition.X - Canvas.AbsolutePosition.X
-    local newX = currentX + (moveLeft and -playerSpeed*dt or moveRight and playerSpeed*dt or 0)
-    newX = math.clamp(newX, minX, maxX)
-    player.Position = UDim2.new(0, newX, 1, -30)
-    playerPosX = newX / canvasAbs.X
+    if canvasAbs.Y == 0 then return end
     
-    -- Move bullets
-    for i = #bullets, 1, -1 do
-        local b = bullets[i]
-        if not b.Parent then table.remove(bullets, i) continue end
-        local y = b.Position.Y.Offset - bulletSpeed * dt
-        if y < -20 then
-            b:Destroy()
-            table.remove(bullets, i)
-        else
-            b.Position = UDim2.new(0, b.Position.X.Offset, 0, y)
+    local minGapY = 50
+    local maxGapY = canvasAbs.Y - pipeGap - 50
+    local gapY = math.random(minGapY, maxGapY)
+    
+    local pipeGroup = {}
+    
+    -- Top pipe
+    local topPipe = Instance.new("Frame")
+    topPipe.Size = UDim2.new(0, pipeWidth, 0, gapY)
+    topPipe.Position = UDim2.new(1, 0, 0, 0)
+    topPipe.BackgroundColor3 = Color3.fromRGB(50, 150, 50)
+    topPipe.BorderSizePixel = 0
+    topPipe.ZIndex = 3
+    topPipe.Parent = Canvas
+    Instance.new("UICorner", topPipe).CornerRadius = UDim.new(0, 2)
+    
+    local topGlow = Instance.new("Frame")
+    topGlow.Size = UDim2.new(1, 2, 1, 0)
+    topGlow.Position = UDim2.new(0, -1, 0, 0)
+    topGlow.BackgroundColor3 = Color3.fromRGB(100, 255, 100)
+    topGlow.BackgroundTransparency = 0.5
+    topGlow.BorderSizePixel = 0
+    topGlow.ZIndex = 2
+    topGlow.Parent = topPipe
+    
+    -- Bottom pipe
+    local bottomPipe = Instance.new("Frame")
+    local bottomHeight = canvasAbs.Y - gapY - pipeGap
+    bottomPipe.Size = UDim2.new(0, pipeWidth, 0, bottomHeight)
+    bottomPipe.Position = UDim2.new(1, 0, 0, gapY + pipeGap)
+    bottomPipe.BackgroundColor3 = Color3.fromRGB(50, 150, 50)
+    bottomPipe.BorderSizePixel = 0
+    bottomPipe.ZIndex = 3
+    bottomPipe.Parent = Canvas
+    Instance.new("UICorner", bottomPipe).CornerRadius = UDim.new(0, 2)
+    
+    local bottomGlow = Instance.new("Frame")
+    bottomGlow.Size = UDim2.new(1, 2, 1, 0)
+    bottomGlow.Position = UDim2.new(0, -1, 0, 0)
+    bottomGlow.BackgroundColor3 = Color3.fromRGB(100, 255, 100)
+    bottomGlow.BackgroundTransparency = 0.5
+    bottomGlow.BorderSizePixel = 0
+    bottomGlow.ZIndex = 2
+    bottomGlow.Parent = bottomPipe
+    
+    table.insert(pipes, {
+        top = topPipe,
+        bottom = bottomPipe,
+        x = Canvas.AbsoluteSize.X,
+        passed = false
+    })
+end
+
+-- Reset game
+local function resetGame()
+    gameActive = true
+    score = 0
+    ScoreLabel.Text = "SCORE: 0"
+    
+    -- Clear pipes
+    for _, pipe in ipairs(pipes) do
+        if pipe.top then pipe.top:Destroy() end
+        if pipe.bottom then pipe.bottom:Destroy() end
+    end
+    pipes = {}
+    
+    -- Reset bird
+    createBird()
+    pipeSpawnTimer = 0.5 -- Small delay before first pipe
+end
+
+-- Jump function
+local function flap()
+    if not gameActive then
+        resetGame()
+        return
+    end
+    birdVelocity = jumpForce
+    
+    -- Add visual feedback
+    if bird then
+        local originalColor = bird.BackgroundColor3
+        bird.BackgroundColor3 = Color3.fromRGB(255, 255, 100)
+        task.delay(0.1, function()
+            if bird then bird.BackgroundColor3 = originalColor end
+        end)
+    end
+end
+
+-- Update game
+local function updateGame(dt)
+    if not gameActive or not bird or not bird.Parent then return end
+    
+    local canvasAbs = Canvas.AbsoluteSize
+    if canvasAbs.Y == 0 then return end
+    
+    -- Apply gravity
+    birdVelocity = birdVelocity + gravity * dt
+    local birdY = bird.Position.Y.Offset + birdVelocity * dt
+    
+    -- Boundaries
+    local minY = 5
+    local maxY = canvasAbs.Y - bird.AbsoluteSize.Y - 5
+    if birdY < minY then
+        birdY = minY
+        birdVelocity = 0
+        gameActive = false
+    elseif birdY > maxY then
+        birdY = maxY
+        birdVelocity = 0
+        gameActive = false
+    end
+    
+    bird.Position = UDim2.new(0.5, -10, 0, birdY)
+    
+    -- Spawn pipes
+    pipeSpawnTimer = pipeSpawnTimer + dt
+    if pipeSpawnTimer >= pipeSpawnInterval and gameActive then
+        pipeSpawnTimer = 0
+        createPipePair()
+    end
+    
+    -- Move pipes and check collisions
+    for i = #pipes, 1, -1 do
+        local pipe = pipes[i]
+        if not pipe.top or not pipe.top.Parent then
+            table.remove(pipes, i)
+            continue
+        end
+        
+        local newX = pipe.x - pipeSpeed * dt
+        pipe.x = newX
+        pipe.top.Position = UDim2.new(0, newX, 0, pipe.top.Position.Y.Offset)
+        pipe.bottom.Position = UDim2.new(0, newX, 0, pipe.bottom.Position.Y.Offset)
+        
+        -- Remove offscreen pipes
+        if newX + pipeWidth < 0 then
+            pipe.top:Destroy()
+            pipe.bottom:Destroy()
+            table.remove(pipes, i)
+            continue
+        end
+        
+        -- Score when passing pipe
+        if not pipe.passed and newX + pipeWidth < bird.Position.X.Offset then
+            pipe.passed = true
+            score = score + 1
+            ScoreLabel.Text = "SCORE: " .. score
+            if score > bestScore then
+                bestScore = score
+                BestLabel.Text = "BEST: " .. bestScore
+            end
+        end
+        
+        -- Collision detection
+        if gameActive then
+            local birdX = bird.Position.X.Offset
+            local birdY = bird.Position.Y.Offset
+            local birdSizeX = bird.AbsoluteSize.X
+            local birdSizeY = bird.AbsoluteSize.Y
+            
+            -- Check collision with top pipe
+            if newX < birdX + birdSizeX and newX + pipeWidth > birdX then
+                if birdY < pipe.top.Size.Y.Offset then
+                    gameActive = false
+                end
+                -- Check collision with bottom pipe
+                if birdY + birdSizeY > pipe.bottom.Position.Y.Offset then
+                    gameActive = false
+                end
+            end
         end
     end
     
-    -- Move enemies (simple left-right bounce)
-    local enemyMoveX = 0
-    local edgeHit = false
-    for _, e in ipairs(enemies) do
-        local x = e.Position.X.Offset
-        if x < 10 or x > Canvas.AbsoluteSize.X - e.AbsoluteSize.X - 10 then
-            edgeHit = true
+    -- Game over handling
+    if not gameActive then
+        -- Show game over text
+        if not Canvas:FindFirstChild("GameOverText") then
+            local gameOverText = Instance.new("TextLabel")
+            gameOverText.Name = "GameOverText"
+            gameOverText.Size = UDim2.new(1, 0, 1, 0)
+            gameOverText.BackgroundTransparency = 1
+            gameOverText.Text = "GAME OVER\nTap FLAP to restart"
+            gameOverText.TextColor3 = Color3.fromRGB(255, 100, 100)
+            gameOverText.TextSize = 14
+            gameOverText.Font = Enum.Font.GothamBold
+            gameOverText.TextWrapped = true
+            gameOverText.ZIndex = 5
+            gameOverText.Parent = Canvas
         end
-    end
-    if edgeHit then
-        for _, e in ipairs(enemies) do
-            local y = e.Position.Y.Offset + 15
-            e.Position = UDim2.new(0, e.Position.X.Offset, 0, y)
-        end
-        enemyMoveX = -enemyMoveX
     else
-        enemyMoveX = (math.sin(tick()*2) > 0 and 30 or -30) * dt
-    end
-    
-    for _, e in ipairs(enemies) do
-        local x = e.Position.X.Offset + enemyMoveX
-        x = math.clamp(x, 10, Canvas.AbsoluteSize.X - e.AbsoluteSize.X - 10)
-        e.Position = UDim2.new(0, x, 0, e.Position.Y.Offset)
-    end
-    
-    -- Collisions: bullets vs enemies
-    for i = #bullets, 1, -1 do
-        local b = bullets[i]
-        local bPos = b.Position
-        local bAbsPos = b.AbsolutePosition
-        local hit = false
-        for j = #enemies, 1, -1 do
-            local e = enemies[j]
-            if e and e.Parent then
-                local eAbsPos = e.AbsolutePosition
-                if math.abs(bAbsPos.X - eAbsPos.X) < e.AbsoluteSize.X/2 + b.AbsoluteSize.X/2 and
-                   math.abs(bAbsPos.Y - eAbsPos.Y) < e.AbsoluteSize.Y/2 + b.AbsoluteSize.Y/2 then
-                    e:Destroy()
-                    table.remove(enemies, j)
-                    b:Destroy()
-                    table.remove(bullets, i)
-                    score = score + 10
-                    ScoreLabel.Text = "SCORE: " .. score
-                    hit = true
-                    break
-                end
-            end
-        end
-        if hit then continue end
-    end
-    
-    -- Enemy vs player collision
-    for _, e in ipairs(enemies) do
-        local eAbs = e.AbsolutePosition
-        local pAbs = player.AbsolutePosition
-        if math.abs(eAbs.X - pAbs.X) < player.AbsoluteSize.X and
-           math.abs(eAbs.Y - pAbs.Y) < player.AbsoluteSize.Y then
-            lives = lives - 1
-            LivesLabel.Text = "LIVES: " .. lives
-            if lives <= 0 then
-                gameActive = false
-                player:Destroy()
-                player = nil
-                for _, b in ipairs(bullets) do b:Destroy() end
-                bullets = {}
-                for _, e in ipairs(enemies) do e:Destroy() end
-                enemies = {}
-                local gameOverText = Instance.new("TextLabel")
-                gameOverText.Size = UDim2.new(1, 0, 1, 0)
-                gameOverText.BackgroundTransparency = 1
-                gameOverText.Text = "GAME OVER\nTap to restart"
-                gameOverText.TextColor3 = Color3.fromRGB(255, 100, 100)
-                gameOverText.TextSize = 18
-                gameOverText.Font = Enum.Font.GothamBold
-                gameOverText.TextWrapped = true
-                gameOverText.ZIndex = 5
-                gameOverText.Parent = Canvas
-                local function restart()
-                    gameOverText:Destroy()
-                    gameActive = true
-                    lives = 3
-                    score = 0
-                    LivesLabel.Text = "LIVES: 3"
-                    ScoreLabel.Text = "SCORE: 0"
-                    createPlayer()
-                    spawnEnemies()
-                end
-                gameOverText.InputBegan:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        restart()
-                    end
-                end)
-            else
-                -- Respawn player and reset enemies
-                if player then player:Destroy() end
-                createPlayer()
-                -- Remove all enemies and spawn new wave
-                for _, e in ipairs(enemies) do e:Destroy() end
-                enemies = {}
-                spawnEnemies()
-                for _, b in ipairs(bullets) do b:Destroy() end
-                bullets = {}
-            end
-            break
-        end
-    end
-    
-    -- If all enemies destroyed, spawn new wave
-    if #enemies == 0 and gameActive then
-        spawnEnemies()
+        local gameOverText = Canvas:FindFirstChild("GameOverText")
+        if gameOverText then gameOverText:Destroy() end
     end
 end
 
 -- Input handling
-local moveLeft = false
-local moveRight = false
+FlapBtn.MouseButton1Click:Connect(function() flap() end)
 
-LeftBtn.MouseButton1Down:Connect(function() moveLeft = true end)
-LeftBtn.MouseButton1Up:Connect(function() moveLeft = false end)
-LeftBtn.MouseLeave:Connect(function() moveLeft = false end)
-RightBtn.MouseButton1Down:Connect(function() moveRight = true end)
-RightBtn.MouseButton1Up:Connect(function() moveRight = false end)
-RightBtn.MouseLeave:Connect(function() moveRight = false end)
-
-FireBtn.MouseButton1Click:Connect(function() shoot() end)
-
--- Touchscreen support: also allow tapping on canvas to fire, and drag left/right on canvas to move
-local dragging = false
-local lastDragX = 0
+-- Touchscreen support: tap anywhere on canvas to flap
 Canvas.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-        if input.Position.Y > Canvas.AbsolutePosition.Y + Canvas.AbsoluteSize.Y/2 then
-            -- lower half: fire
-            shoot()
-        else
-            dragging = true
-            lastDragX = input.Position.X
-        end
-    end
-end)
-Canvas.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = false
-    end
-end)
-Canvas.InputChanged:Connect(function(input)
-    if dragging and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement) then
-        local delta = input.Position.X - lastDragX
-        if math.abs(delta) > 5 then
-            if delta > 0 then moveRight = true; moveLeft = false
-            else moveLeft = true; moveRight = false end
-            lastDragX = input.Position.X
-        end
+        flap()
     end
 end)
 
+-- Keyboard support (spacebar)
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.Space or input.KeyCode == Enum.KeyCode.Up then
+        flap()
+    end
+end)
+
+-- Start game
+createBird()
+
 -- Game loop
-createPlayer()
-spawnEnemies()
 local heartbeat
 heartbeat = RunService.Heartbeat:Connect(function(dt)
-    local now = tick()
     dt = math.min(dt, 0.033)
     updateGame(dt)
 end)
@@ -620,7 +587,7 @@ ScreenGui.Destroying:Connect(function()
     if heartbeat then heartbeat:Disconnect() end
 end)
 
--- ========== MAIN CARD (unchanged except visual) ==========
+-- ========== MAIN CARD ==========
 local Card = Instance.new("Frame")
 Card.Size = UDim2.new(0, 420, 0, 480)
 Card.Position = UDim2.new(0.5, -210, 0.5, -240)
@@ -710,7 +677,7 @@ task.spawn(function()
     end
 end)
 
--- Log Frame (unchanged)
+-- Log Frame
 local LogFrame = Instance.new("Frame")
 LogFrame.Size = UDim2.new(1, -30, 0, 220)
 LogFrame.Position = UDim2.new(0, 15, 0, 85)
